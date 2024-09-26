@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扫雷游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #controls {
+            margin-bottom: 10px;
+        }
+        #board {
+            display: grid;
+            border: 2px solid #000;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            user-select: none;
+            font-size: 20px;
+            background-color: #e0e0e0;
+        }
+        .cell.open {
+            background-color: #fff;
+            cursor: default;
+        }
+        .cell.flagged {
+            background-color: #ffeb3b;
+        }
+        .cell.mine {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="controls">
+            <label for="difficulty">选择难度：</label>
+            <select id="difficulty">
+                <option value="easy">简单</option>
+                <option value="medium">中等</option>
+                <option value="hard">困难</option>
+                <option value="custom">自定义</option>
+            </select>
+            <button id="start-button">开始游戏</button>
+            <div id="custom-settings" style="display: none;">
+                <label for="custom-width">宽度：</label>
+                <input type="number" id="custom-width" min="5" value="10">
+                <label for="custom-height">高度：</label>
+                <input type="number" id="custom-height" min="5" value="10">
+                <label for="custom-mines">雷数：</label>
+                <input type="number" id="custom-mines" min="1" value="10">
+            </div>
+            <div>时间：<span id="timer">0</span>秒</div>
+        </div>
+        <div id="board"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const boardElement = document.getElementById('board');
+            const difficultySelect = document.getElementById('difficulty');
+            const startButton = document.getElementById('start-button');
+            const customSettings = document.getElementById('custom-settings');
+            const customWidthInput = document.getElementById('custom-width');
+            const customHeightInput = document.getElementById('custom-height');
+            const customMinesInput = document.getElementById('custom-mines');
+            const timerElement = document.getElementById('timer');
+
+            let board = [];
+            let rows = 0;
+            let cols = 0;
+            let mines = 0;
+            let timer = null;
+            let seconds = 0;
+            let gameEnded = false;
+
+            difficultySelect.addEventListener('change', () => {
+                customSettings.style.display = difficultySelect.value === 'custom' ? 'block' : 'none';
+            });
+
+            startButton.addEventListener('click', () => {
+                initializeGame();
+            });
+
+            function initializeGame() {
+                clearInterval(timer);
+                seconds = 0;
+                timerElement.textContent = seconds;
+                gameEnded = false;
+
+                const difficulty = difficultySelect.value;
+                if (difficulty === 'easy') {
+                    rows = cols = 10;
+                    mines = 10;
+                } else if (difficulty === 'medium') {
+                    rows = cols = 16;
+                    mines = 40;
+                } else if (difficulty === 'hard') {
+                    rows = 16;
+                    cols = 30;
+                    mines = 99;
+                } else if (difficulty === 'custom') {
+                    rows = parseInt(customHeightInput.value);
+                    cols = parseInt(customWidthInput.value);
+                    mines = parseInt(customMinesInput.value);
+                }
+
+                generateBoard();
+                startTimer();
+            }
+
+            function generateBoard() {
+                board = Array.from({ length: rows }, () => Array.from({ length: cols }, () => ({ mine: false, opened: false, flagged: false, adjacentMines: 0 })));
+
+                // Place mines
+                let minesPlaced = 0;
+                while (minesPlaced < mines) {
+                    const row = Math.floor(Math.random() * rows);
+                    const col = Math.floor(Math.random() * cols);
+                    if (!board[row][col].mine) {
+                        board[row][col].mine = true;
+                        minesPlaced++;
+                    }
+                }
+
+                // Calculate adjacent mines
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (!board[r][c].mine) {
+                            board[r][c].adjacentMines = countAdjacentMines(r, c);
+                        }
+                    }
+                }
+
+                renderBoard();
+            }
+
+            function countAdjacentMines(row, col) {
+                let count = 0;
+                for (let r = -1; r <= 1; r++) {
+                    for (let c = -1; c <= 1; c++) {
+                        if (r === 0 && c === 0) continue;
+                        const newRow = row + r;
+                        const newCol = col + c;
+                        if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols && board[newRow][newCol].mine) {
+                            count++;
+                        }
+                    }
+                }
+                return count;
+            }
+
+            function renderBoard() {
+                boardElement.style.gridTemplateRows = `repeat(${rows}, 30px)`;
+                boardElement.style.gridTemplateColumns = `repeat(${cols}, 30px)`;
+                boardElement.innerHTML = '';
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const cellElement = document.createElement('div');
+                        cellElement.className = 'cell';
+                        cellElement.dataset.row = r;
+                        cellElement.dataset.col = c;
+                        cellElement.addEventListener('click', handleCellClick);
+                        cellElement.addEventListener('contextmenu', handleCellRightClick);
+                        boardElement.appendChild(cellElement);
+                    }
+                }
+            }
+
+            function handleCellClick(event) {
+                if (gameEnded) return;
+                const row = parseInt(event.target.dataset.row);
+                const col = parseInt(event.target.dataset.col);
+                openCell(row, col);
+            }
+
+            function handleCellRightClick(event) {
+                event.preventDefault();
+                if (gameEnded) return;
+                const row = parseInt(event.target.dataset.row);
+                const col = parseInt(event.target.dataset.col);
+                toggleFlag(row, col);
+            }
+
+            function openCell(row, col) {
+                if (board[row][col].opened || board[row][col].flagged) return;
+
+                board[row][col].opened = true;
+                const cellElement = getCellElement(row, col);
+                cellElement.classList.add('open');
+
+                if (board[row][col].mine) {
+                    cellElement.classList.add('mine');
+                    alert('游戏结束！你踩到雷了！');
+                    clearInterval(timer);
+                    gameEnded = true;
+                    return;
+                }
+
+                if (board[row][col].adjacentMines > 0) {
+                    cellElement.textContent = board[row][col].adjacentMines;
+                } else {
+                    for (let r = -1; r <= 1; r++) {
+                        for (let c = -1; c <= 1; c++) {
+                            const newRow = row + r;
+                            const newCol = col + c;
+                            if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
+                                openCell(newRow, newCol);
+                            }
+                        }
+                    }
+                }
+
+                checkWin();
+            }
+
+            function toggleFlag(row, col) {
+                if (board[row][col].opened) return;
+
+                board[row][col].flagged = !board[row][col].flagged;
+                const cellElement = getCellElement(row, col);
+                cellElement.classList.toggle('flagged');
+            }
+
+            function getCellElement(row, col) {
+                return boardElement.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
+            }
+
+            function checkWin() {
+                let allMinesFlagged = true;
+                let allCellsOpened = true;
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (board[r][c].mine && !board[r][c].flagged) {
+                            allMinesFlagged = false;
+                        }
+                        if (!board[r][c].mine && !board[r][c].opened) {
+                            allCellsOpened = false;
+                        }
+                    }
+                }
+
+                if (allMinesFlagged && allCellsOpened) {
+                    alert('恭喜你，赢了！');
+                    clearInterval(timer);
+                    gameEnded = true;
+                }
+            }
+
+            function startTimer() {
+                timer = setInterval(() => {
+                    seconds++;
+                    timerElement.textContent = seconds;
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
+

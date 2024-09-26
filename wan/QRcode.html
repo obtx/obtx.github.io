@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二维码生成器</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            margin-top: 50px;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .qr-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">二维码生成器</h1>
+        <form id="qrForm">
+            <div class="form-group">
+                <label for="textInput">输入文字或链接</label>
+                <input type="text" class="form-control" id="textInput" placeholder="输入文字或链接">
+            </div>
+            <div class="form-group">
+                <label for="errorCorrection">选择纠错级别</label>
+                <select class="form-control" id="errorCorrection">
+                    <option value="L">低 (L)</option>
+                    <option value="M">中 (M)</option>
+                    <option value="Q">高 (Q)</option>
+                    <option value="H">最高 (H)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">生成二维码</button>
+        </form>
+        <div class="qr-container" id="qrcode"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#qrForm').on('submit', function(event) {
+                event.preventDefault();
+                var text = $('#textInput').val();
+                var errorCorrectionLevel = $('#errorCorrection').val();
+                $('#qrcode').empty();
+                if (text) {
+                    new QRCode(document.getElementById('qrcode'), {
+                        text: text,
+                        width: 256,
+                        height: 256,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel[errorCorrectionLevel]
+                    });
+                } else {
+                    alert('请输入一些文字或链接');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

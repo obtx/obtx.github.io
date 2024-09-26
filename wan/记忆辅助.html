@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>辅助背诵工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f5;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+        textarea, input {
+            width: 80%;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        .output {
+            margin-top: 20px;
+        }
+        .output div {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>辅助背诵工具</h1>
+    <textarea id="inputText" rows="6" placeholder="输入文字内容..."></textarea>
+    <br>
+    <input id="placeholder" type="text" placeholder="输入占位符..." value="*">
+    <br>
+    <button onclick="processText()">生成输出</button>
+
+    <div class="output">
+        <h2>奇数位字符</h2>
+        <div id="oddOutput"></div>
+
+        <h2>偶数位字符</h2>
+        <div id="evenOutput"></div>
+    </div>
+
+    <script>
+        function processText() {
+            const text = document.getElementById('inputText').value;
+            const placeholder = document.getElementById('placeholder').value || '*';
+            const isChinese = /[\u4e00-\u9fa5]/.test(text);
+            
+            let oddText = '';
+            let evenText = '';
+            
+            if (isChinese) {
+                for (let i = 0; i < text.length; i++) {
+                    if (i % 2 === 0) {
+                        oddText += text[i];
+                        evenText += placeholder;
+                    } else {
+                        oddText += placeholder;
+                        evenText += text[i];
+                    }
+                }
+            } else {
+                const words = text.split(' ');
+                for (let i = 0; i < words.length; i++) {
+                    if (i % 2 === 0) {
+                        oddText += words[i] + ' ';
+                        evenText += placeholder.repeat(words[i].length) + ' ';
+                    } else {
+                        oddText += placeholder.repeat(words[i].length) + ' ';
+                        evenText += words[i] + ' ';
+                    }
+                }
+            }
+
+            document.getElementById('oddOutput').textContent = oddText.trim();
+            document.getElementById('evenOutput').textContent = evenText.trim();
+        }
+    </script>
+
+</body>
+</html>
+

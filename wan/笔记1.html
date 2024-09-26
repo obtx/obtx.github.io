@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>简易笔记应用</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #editor {
+            width: 80%;
+            height: 500px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 20px auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+        #toolbar {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <button onclick="formatText('bold')">加粗</button>
+        <button onclick="formatText('italic')">斜体</button>
+        <button onclick="formatText('underline')">下划线</button>
+        <button onclick="saveNote()">保存笔记</button>
+        <button onclick="exportNote()">导出为.one文件</button>
+    </div>
+    <div id="editor" contenteditable="true"></div>
+    <script>
+        function formatText(command) {
+            document.execCommand(command, false, null);
+        }
+
+        function saveNote() {
+            const content = document.getElementById('editor').innerHTML;
+            localStorage.setItem('note', content);
+            alert('笔记已保存');
+        }
+
+        function loadNote() {
+            const savedContent = localStorage.getItem('note');
+            if (savedContent) {
+                document.getElementById('editor').innerHTML = savedContent;
+            }
+        }
+
+        function exportNote() {
+            const content = document.getElementById('editor').innerHTML;
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'note.one';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        window.onload = loadNote;
+    </script>
+</body>
+</html>
+

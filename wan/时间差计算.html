@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间差计算器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f3f3f3, #e2e2e2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+        }
+        input, button, select {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 22px);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>时间差计算器</h1>
+        <label for="datetime">输入初始时间:</label>
+        <input type="datetime-local" id="datetime" value="1998-02-17T00:00">
+        <button onclick="calculateDifference()">计算</button>
+        <button onclick="startPreciseCalculation()">启动精确计算</button>
+        <label for="precision">选择有效数字位数:</label>
+        <select id="precision">
+	    <option value="0">0</option>
+	    <option value="1">1</option>
+	    <option value="2">2</option>
+	    <option value="3">3</option>
+	    <option value="4">4</option>
+	    <option value="5">5</option>
+	    <option value="6">6</option>
+	    <option value="7">7</option>
+	    <option value="8">8</option>
+	    <option value="9" selected>9</option>
+	    <option value="10">10</option>
+	    <option value="11">11</option>
+	</select>
+        <div class="result" id="result"></div>
+    </div>
+    <script>
+        function calculateDifference() {
+            const inputDate = new Date(document.getElementById('datetime').value);
+            const currentDate = new Date();
+            const diffMs = currentDate - inputDate;
+
+            const diffSeconds = Math.floor(diffMs / 1000);
+            const diffMinutes = Math.floor(diffSeconds / 60);
+            const diffHours = Math.floor(diffMinutes / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            const diffWeeks = Math.floor(diffDays / 7);
+            const diffMonths = Math.floor(diffDays / 30.44); // 以平均每月30.44天计算
+            const diffYears = Math.floor(diffMonths / 12);
+
+            document.getElementById('result').innerHTML = `
+                <p>年数: ${diffYears}</p>
+                <p>月数: ${diffMonths}</p>
+                <p>星期数: ${diffWeeks}</p>
+                <p>天数: ${diffDays}</p>
+                <p>小时数: ${diffHours}</p>
+                <p>分钟数: ${diffMinutes}</p>
+                <p>秒数: ${diffSeconds}</p>
+            `;
+        }
+
+        function startPreciseCalculation() {
+            function updatePreciseDifference() {
+                const precision = document.getElementById('precision').value;
+                const inputDate = new Date(document.getElementById('datetime').value);
+                const currentDate = new Date();
+                const diffMs = currentDate - inputDate;
+
+                const diffSeconds = (diffMs / 1000).toFixed(precision);
+                const diffMinutes = (diffMs / (1000 * 60)).toFixed(precision);
+                const diffHours = (diffMs / (1000 * 60 * 60)).toFixed(precision);
+                const diffDays = (diffMs / (1000 * 60 * 60 * 24)).toFixed(precision);
+                const diffWeeks = (diffDays / 7).toFixed(precision);
+                const diffMonths = (diffDays / 30.44).toFixed(precision); // 以平均每月30.44天计算
+                const diffYears = (diffMonths / 12).toFixed(precision);
+
+                document.getElementById('result').innerHTML = `
+                    <p>年数: ${diffYears}</p>
+                    <p>月数: ${diffMonths}</p>
+                    <p>星期数: ${diffWeeks}</p>
+                    <p>天数: ${diffDays}</p>
+                    <p>小时数: ${diffHours}</p>
+                    <p>分钟数: ${diffMinutes}</p>
+                    <p>秒数: ${diffSeconds}</p>
+                `;
+            }
+            clearInterval(window.preciseCalculationInterval);
+            window.preciseCalculationInterval = setInterval(updatePreciseDifference, 100);
+        }
+    </script>
+</body>
+</html>
+

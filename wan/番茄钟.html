@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>番茄钟</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+        }
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #007BFF;
+        }
+        .clock, .clock-face {
+            font-size: 48px;
+            margin: 20px;
+            position: relative;
+        }
+        .clock-face {
+            width: 200px;
+            height: 200px;
+            border: 10px solid #007BFF;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .hand {
+            position: absolute;
+            background: #007BFF;
+            top: 50%;
+            transform-origin: 100%;
+            transform: rotate(90deg);
+        }
+        #minuteHand {
+            width: 40%;
+            height: 4px;
+        }
+        #secondHand {
+            width: 50%;
+            height: 2px;
+        }
+        .controls, .log {
+            margin: 10px;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .start-button {
+            background-color: #28a745;
+        }
+        .start-button:hover {
+            background-color: #218838;
+        }
+        .message {
+            margin: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        #customTime {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>番茄钟</h1>
+    <div class="clock" id="clock">25:00</div>
+    <div class="clock-face" id="clockFace">
+        <div class="hand" id="minuteHand"></div>
+        <div class="hand" id="secondHand"></div>
+    </div>
+    <div class="controls">
+        <select id="timeSelect">
+            <option value="25">25 分钟</option>
+            <option value="15">15 分钟</option>
+            <option value="5">5 分钟</option>
+            <option value="custom">自定义</option>
+        </select>
+        <input type="number" id="customTime" placeholder="分钟">
+        <button class="button start-button" onclick="startTimer()">开始</button>
+        <button class="button" onclick="pauseTimer()">暂停</button>
+        <button class="button" onclick="stopTimer()">结束</button>
+        <button class="button" onclick="toggleClock()">切换时钟</button>
+    </div>
+    <div class="message" id="message"></div>
+    <div class="log">
+        <button class="button" onclick="exportLog()">导出日志</button>
+    </div>
+
+    <script>
+        let timer;
+        let remainingTime;
+        let startTime;
+        let elapsedTime = 0;
+        let isPaused = false;
+        const messages = ["加油！你能做到的！", "坚持就是胜利！", "保持专注！", "每一步都很重要！", "成功就在眼前！"];
+        const log = [];
+
+        function startTimer() {
+            if (isPaused) {
+                isPaused = false;
+                timer = setInterval(updateClock, 1000);
+                return;
+            }
+
+            clearInterval(timer);
+            const select = document.getElementById('timeSelect');
+            const customTimeInput = document.getElementById('customTime');
+            let time = select.value === 'custom' ? parseInt(customTimeInput.value) : parseInt(select.value);
+            remainingTime = time * 60;
+            startTime = new Date();
+            updateClock();
+            timer = setInterval(updateClock, 1000);
+            document.getElementById('message').textContent = messages[Math.floor(Math.random() * messages.length)];
+        }
+
+        function pauseTimer() {
+            clearInterval(timer);
+            isPaused = true;
+        }
+
+        function stopTimer() {
+            clearInterval(timer);
+            elapsedTime += (startTime ? Math.floor((new Date() - startTime) / 1000) : 0);
+            log.push(`番茄钟结束: ${new Date().toLocaleString()}, 自律时长: ${Math.floor(elapsedTime / 60)} 分钟`);
+            elapsedTime = 0;
+            remainingTime = 0;
+            document.getElementById('clock').textContent = "00:00";
+            document.getElementById('message').textContent = "番茄钟已结束";
+            startTime = null;
+        }
+
+        function updateClock() {
+            if (remainingTime <= 0) {
+                stopTimer();
+                document.getElementById('message').textContent = "时间到！休息一下吧！";
+                return;
+            }
+            remainingTime--;
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            document.getElementById('clock').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            updateClockFace(minutes, seconds);
+        }
+
+        function exportLog() {
+            const logContent = log.join('\n');
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = '番茄钟日志.txt';
+            link.click();
+        }
+
+        function toggleClock() {
+            const clock = document.getElementById('clock');
+            const clockFace = document.getElementById('clockFace');
+            if (clockFace.style.display === 'none') {
+                clockFace.style.display = 'flex';
+                clock.style.display = 'block';
+            } else {
+                clockFace.style.display = 'none';
+                clock.style.display = 'block';
+            }
+        }
+
+        function updateClockFace(minutes, seconds) {
+            const secondHand = document.getElementById('secondHand');
+            const minuteHand = document.getElementById('minuteHand');
+            secondHand.style.transform = `rotate(${seconds * 6}deg)`;
+            minuteHand.style.transform = `rotate(${minutes * 6}deg)`;
+        }
+
+        document.getElementById('timeSelect').addEventListener('change', function() {
+            const customTimeInput = document.getElementById('customTime');
+            if (this.value === 'custom') {
+                customTimeInput.style.display = 'inline';
+            } else {
+                customTimeInput.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
+
